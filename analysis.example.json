@@ -1,0 +1,15 @@
+{
+  "digest_title": "Test Digest",
+  "summary": "This is a test digest to verify the Notion publishing pipeline is working correctly.",
+  "relevant_posts": [
+    {
+      "id": "test-001",
+      "title": "Test Post: AI in Business",
+      "author": "John Doe",
+      "timestamp": "2026-03-01T08:00:00+00:00",
+      "web_url": "",
+      "relevance_reason": "Directly relates to the student's interest in AI and real business applications.",
+      "suggested_comment": "This is a great example of how AI is reshaping business strategy. The parallels to Clayton Christensen's disruption theory are striking — incumbent firms often underestimate AI adoption curves until it's too late to respond."
+    }
+  ]
+}

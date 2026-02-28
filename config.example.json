@@ -1,0 +1,36 @@
+{
+  "_comment": "Copy this file to config.json and fill in your values. Never commit config.json to git.",
+
+  "yellowdig": {
+    "api_key":   "YOUR_YELLOWDIG_API_KEY_HERE",
+    "network":   "YOUR_NETWORK_ID_OR_URL_NAME_HERE",
+    "community": "YOUR_COMMUNITY_UUID_HERE",
+    "base_url":  "https://data.yellowdig-au.app"
+  },
+
+  "notion": {
+    "api_key":        "YOUR_NOTION_INTEGRATION_TOKEN_HERE",
+    "parent_page_id": "YOUR_NOTION_PAGE_ID_HERE"
+  },
+
+  "lookback_hours": 24,
+
+  "interests": {
+    "_comment_topics": "List the topics you care about. The agent uses these to filter posts.",
+    "topics": [
+      "strategy and competitive advantage",
+      "leadership and organisational behaviour",
+      "entrepreneurship and startups",
+      "marketing and consumer behaviour",
+      "economics and business policy",
+      "data analytics and decision making",
+      "sustainability and ESG",
+      "finance and investment",
+      "technology and digital transformation",
+      "career development and networking"
+    ],
+
+    "_comment_engagement": "Optional: describe posts/discussions you've previously engaged with so Claude can learn your style. Update this over time.",
+    "engagement_signal": "I tend to engage most with posts that connect theory to real business cases, especially in tech or emerging markets. I like discussions that spark debate rather than just share facts."
+  }
+}
