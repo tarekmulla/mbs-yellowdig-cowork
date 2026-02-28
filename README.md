@@ -1,131 +1,99 @@
 # Yellowdig Daily Digest Agent
 
-Fetches today's Yellowdig posts, finds what's relevant to your interests, and drops a structured digest with copy-paste comment suggestions into Notion — every morning, automatically via Claude Cowork.
+Fetches today's Yellowdig posts, finds what's relevant to your interests, and drops a structured digest with comment suggestions into Notion — every morning, fully automated.
 
 ---
 
 ## How it works
 
 ```
-Yellowdig API → fetch_posts.py → posts.json
-      ↓
-Claude Cowork → reads posts.json, filters by your interests, writes analysis.json
-      ↓
-publish_digest.py → Notion page
+7:50 AM  Mac Launch Agent  →  make fetch  →  posts.json
+8:00 AM  Claude Cowork     →  analyse  →  publish to Notion
 ```
+
+The fetch runs on your Mac (not inside Cowork) because Cowork's sandbox restricts outbound network access to an allowlist of approved domains — and Yellowdig's API is not on it. A Mac Launch Agent is macOS's built-in task scheduler: it runs `make fetch` automatically at 7:50 AM every day, even after restarts, and retries if your Mac was asleep at the scheduled time.
 
 ---
 
-## Setup (one-time, ~10 minutes)
+## Setup (one-time)
 
-### 1. Create your config file
+### 1. Configure credentials
 
 ```bash
 cp config.example.json config.json
 ```
 
-Then open `config.json` and fill in:
+Fill in `config.json`:
 
 | Key | Where to find it |
 |-----|-----------------|
 | `yellowdig.api_key` | Yellowdig → Settings → API Keys |
-| `yellowdig.network` | The URL-name or UUID of your Yellowdig network/organisation |
-| `yellowdig.community` | The UUID of your community (visible in the community URL) |
-| `notion.api_key` | https://www.notion.so/my-integrations → New integration → copy Internal Integration Token |
-| `notion.parent_page_id` | Open your target Notion page → click ··· → Copy link → the 32-char hex ID at the end of the URL |
+| `yellowdig.network` | URL-name or UUID of your Yellowdig network (organisation) |
+| `yellowdig.community` | UUID of your community (visible in the community URL) |
+| `notion.api_key` | notion.so/my-integrations → New integration → Internal Integration Token |
+| `notion.parent_page_id` | Target Notion page → ··· → Copy link → 32-char hex ID at end of URL |
 
-### 2. Connect Notion Integration to your page
+### 2. Connect Notion to your page (required)
 
-In Notion: open the parent page → click **···** (top right) → **Add connections** → select your integration.
+In Notion: open the parent page → **···** → **Add connections** → select your integration.
 
-### 3. Set up environment and install dependencies
-
-```bash
-make setup
-```
-
-This creates a `.venv` virtual environment and installs all required packages.
-
-### 4. Test the fetch step
+### 3. Install the Mac scheduler
 
 ```bash
-make fetch
+cd [~/repo/path]
+chmod +x install_scheduler.sh && ./install_scheduler.sh
 ```
 
-You should see `posts.json` created in the project folder. Then follow the Cowork setup below to complete the workflow.
+This installs the Launch Agent and does a live fetch test. After this, everything runs automatically.
 
----
+### 4. Create the Cowork scheduled task
 
-## Makefile reference
+In the Claude desktop app, open **Cowork** → **New scheduled task** and fill in:
 
-| Command | Description |
-|---------|-------------|
-| `make setup` | Create `.venv` virtual environment and install all dependencies (run once) |
-| `make install` | Re-install / update dependencies into an existing venv |
-| `make fetch` | Fetch posts from Yellowdig → `posts.json` |
-| `make publish` | Publish `analysis.json` to Notion |
-| `make clean` | Delete the virtual environment |
-
----
-
-## Scheduling in Claude Cowork
-
-This is the recommended approach if you have a **Claude Pro** subscription. Claude Cowork acts as the AI brain.
-
-### How it works
+| Field | Value |
+|-------|-------|
+| **Title** | `Yellowdig Study Assistance` |
+| **Schedule** | Daily at 8:00 AM |
+| **Description** | Daily scheduled job to analyse yellowdig recent posts, suggest comment, and put it in Notion |
+| **Workspace folder** | Select this `mbs-yellowdig-cowork` folder |
+| **Prompt** | Paste the block below |
 
 ```
-make fetch  →  posts.json  →  Claude Cowork analyses  →  analysis.json  →  make publish  →  Notion
+posts.json is pre-fetched by a local Mac script that runs at 7:50 AM, before
+this task fires.
+
+1. Read posts.json from the workspace folder.
+2. Produce two sections and save as analysis.json:
+   {
+     "digest_title": "Yellowdig Digest — DD Mon YYYY",
+     "need_to_know": [
+       {
+         "id", "title", "author", "timestamp", "web_url",
+         "summary"   ← 2-3 sentence summary of what was said and why it matters
+       }
+     ],
+     "relevant_posts": [
+       {
+         "id", "title", "author", "timestamp", "web_url",
+         "relevance_reason", "suggested_comment"
+       }
+     ]
+   }
+
+   need_to_know: posts from instructors or peers that contain important
+   information (deadlines, policy changes, assignment clarifications, key
+   announcements). Include regardless of your interest topics.
+
+   relevant_posts: posts that match the interests listed in posts.json.
+   For each, write a thoughtful 2-4 sentence MBA comment that adds value
+   to the discussion.
+
+3. Publish the digest to Notion using the Notion MCP tool (do NOT run
+   publish_digest.py — it is blocked by the network proxy). Use the
+   notion.parent_page_id from config.json as the parent page. Structure
+   the Notion page with two clear sections: "Need to Know" followed by
+   "Posts Worth Engaging With".
 ```
-
-### Cowork scheduling prompt
-
-Copy this prompt into the **Cowork** tab of Claude Desktop, replacing `[PROJECT_PATH]` with your actual path (e.g. `/Users/john/mbs-yellowdig-cowork`):
-
----
-
-> ```
-> Every morning at 8:00 AM, run my Yellowdig digest workflow:
->
-> PROJECT_PATH=[PROJECT_PATH]
->
-> Step 1 — Fetch posts:
->   Run: cd $PROJECT_PATH && make fetch
->   This creates posts.json in the project folder.
->
-> Step 2 — Analyse:
->   Read $PROJECT_PATH/posts.json. It contains:
->   - "posts": list of recent Yellowdig posts (id, title, body, author, timestamp, tags)
->   - "interests": the student's topics of interest and engagement signal
->
->   Identify which posts are relevant to the student's interests. For each relevant post,
->   write a thoughtful 2-4 sentence comment they could post (substantive, collegial, adds
->   value — not "Great post!"). Connect to MBA topics where possible.
->
->   Save your analysis to $PROJECT_PATH/analysis.json with EXACTLY this structure:
->   {
->     "digest_title": "short punchy title for today's digest",
->     "summary": "2-3 sentence overview of what's trending in the community",
->     "relevant_posts": [
->       {
->         "id": "post id from posts.json",
->         "title": "post title",
->         "author": "author name",
->         "timestamp": "ISO timestamp",
->         "web_url": "",
->         "relevance_reason": "1-sentence explanation of why this matches the student's interests",
->         "suggested_comment": "the full comment text ready to copy-paste"
->       }
->     ]
->   }
->
-> Step 3 — Publish:
->   Run: cd $PROJECT_PATH && make publish
->   This creates the Notion digest page.
->
-> After completing, tell me the Notion page URL from the script output.
-> If any step fails, save the error to $PROJECT_PATH/error_log.txt and notify me.
-> ```
 
 ---
 
@@ -133,8 +101,8 @@ Copy this prompt into the **Cowork** tab of Claude Desktop, replacing `[PROJECT_
 
 Edit the `interests` section in `config.json`:
 
-- **`topics`** — list of subjects you care about. Be specific: "Porter's Five Forces and competitive strategy" works better than just "strategy".
-- **`engagement_signal`** — a short description of what kinds of discussions you typically jump into. Update this every few weeks as your interests evolve.
+- **`topics`** — subjects you care about (e.g. "AI", "Cybersecurity")
+- **`engagement_signal`** — the kinds of discussions you typically jump into
 
 ---
 
@@ -142,11 +110,11 @@ Edit the `interests` section in `config.json`:
 
 | Problem | Fix |
 |---------|-----|
-| `401 Unauthorized` from Yellowdig | Check your `api_key` and that you're an Owner/Facilitator of the community |
-| `400 Bad Request` from Yellowdig | Check your `network` and `community` values in `config.json` |
-| Notion page not created | Make sure your integration is connected to the parent page (step 2 above) |
-| `analysis.json` missing keys | Check the Cowork output — Claude must write all required fields before `make publish` runs |
-| No posts found | The community may be quiet, or `lookback_hours` may need to be increased in config.json |
+| `401 Unauthorized` from Yellowdig | Check `api_key` in config.json |
+| `400 Bad Request` from Yellowdig | Check `network` and `community` values in config.json |
+| No posts found | Community may be quiet — try increasing `lookback_hours` in config.json |
+| Notion page not created | Make sure the integration is connected to the parent page (step 2) |
+| Fetch didn't run this morning | Check `fetch.log` in this folder for errors |
 
 ---
 
@@ -154,11 +122,13 @@ Edit the `interests` section in `config.json`:
 
 ```
 mbs-yellowdig-cowork/
-├── fetch_posts.py        ← Step 1: fetches posts → posts.json
-├── publish_digest.py     ← Step 2: reads analysis.json → creates Notion page
-├── posts.json            ← generated by make fetch (gitignored)
-├── analysis.json         ← written by Claude Cowork (gitignored)
-├── config.json           ← your secrets (never share/commit this)
+├── fetch_posts.py        ← run by the Mac Launch Agent via make fetch
+├── publish_digest.py     ← unused (Cowork publishes via Notion MCP)
+├── install_scheduler.sh  ← one-time setup: installs the Mac Launch Agent
+├── posts.json            ← written by fetch, read by Cowork (gitignored)
+├── analysis.json         ← written by Cowork (gitignored)
+├── fetch.log             ← Launch Agent output log (gitignored)
+├── config.json           ← your secrets (never commit)
 ├── config.example.json   ← template (safe to share)
 ├── requirements.txt
 ├── Makefile

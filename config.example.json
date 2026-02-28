@@ -9,8 +9,9 @@
   },
 
   "notion": {
-    "api_key":        "YOUR_NOTION_INTEGRATION_TOKEN_HERE",
-    "parent_page_id": "YOUR_NOTION_PAGE_ID_HERE"
+    "api_key":          "YOUR_NOTION_INTEGRATION_TOKEN_HERE",
+    "_comment_page_id": "Should be in this format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (32 hex chars with dashes). You can find this in the URL of your Notion page.",
+    "parent_page_id":   "YOUR_NOTION_PAGE_ID_HERE"
   },
 
   "lookback_hours": 24,
