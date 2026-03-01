@@ -35,30 +35,24 @@ def build_notion_content(analysis: dict, run_date: str) -> str:
 
     lines = [
         f"> Generated on {run_date}  |  {len(posts)} relevant post(s) found",
-        "",
         "## Community Overview",
         summary,
-        "",
         "---",
-        "",
     ]
 
     if need_to_know:
-        lines += ["## Need to Know", ""]
+        lines += ["## Need to Know"]
         for item in need_to_know:
             url        = item.get("web_url", "")
-            title_line = f"**[{item['title']}]({url})**" if url else f"**{item['title']}**"
+            title_line = f"### [{item['title']}]({url})" if url else f"### {item['title']}"
             lines += [
-                f"### {title_line}",
+                f"{title_line}",
                 f"{item.get('author', 'Unknown')}",
-                "",
                 item.get("summary", ""),
-                "",
                 "---",
-                "",
             ]
 
-    lines += ["## Posts Worth Engaging With", ""]
+    lines += ["## Posts Worth Engaging With"]
 
     if not posts:
         lines.append("_No posts matched your interests today. Check back tomorrow!_")
@@ -73,30 +67,23 @@ def build_notion_content(analysis: dict, run_date: str) -> str:
                     pass
 
             url        = post.get("web_url", "")
-            title_line = f"**[{post['title']}]({url})**" if url else f"**{post['title']}**"
+            title_line = f"[{post['title']}]({url})" if url else f"{post['title']}"
 
             lines += [
                 f"### {i}. {title_line}",
-                f"{post.get('author', 'Unknown')}  ·  {ts}",
-                "",
-                f"**Why it's relevant:** {post.get('relevance_reason', '')}",
-                "",
-                "**Suggested Comment:**",
+                f"{post.get('author', 'Unknown')}  ·  Time: {ts}",
+                f"Why it's relevant: {post.get('relevance_reason', '')}",
+                "Suggested Comment:",
                 f"> {post.get('suggested_comment', '')}",
-                "",
                 "---",
-                "",
             ]
 
     draft = analysis.get("draft_post", {})
     if draft:
         lines += [
             "## Your Post for Today",
-            "",
-            f"**{draft.get('title', '')}**",
-            "",
+            f"### {draft.get('title', '')}",
             draft.get("body", ""),
-            "",
         ]
 
     return "\n".join(lines)

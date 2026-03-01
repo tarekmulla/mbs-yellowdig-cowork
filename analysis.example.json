@@ -1,15 +1,29 @@
 {
-  "digest_title": "Test Digest",
-  "summary": "This is a test digest to verify the Notion publishing pipeline is working correctly.",
-  "relevant_posts": [
+  "digest_title": "Yellowdig Digest — 01 Mar 2026",
+  "summary": "2-3 sentence overview of community activity this period. Summarise the key themes and any notable instructor or peer contributions.",
+  "need_to_know": [
     {
-      "id": "test-001",
-      "title": "Test Post: AI in Business",
-      "author": "John Doe",
+      "id": "example-001",
+      "title": "IMPORTANT - Assignment 2 Deadline Extended",
+      "author": "Luckmika (Instructor)",
       "timestamp": "2026-03-01T08:00:00+00:00",
       "web_url": "",
-      "relevance_reason": "Directly relates to the student's interest in AI and real business applications.",
-      "suggested_comment": "This is a great example of how AI is reshaping business strategy. The parallels to Clayton Christensen's disruption theory are striking — incumbent firms often underestimate AI adoption curves until it's too late to respond."
+      "summary": "Instructor announced a one-week extension for Assignment 2 due to public holiday. New deadline is 15 March 2026. Submission requirements remain unchanged."
     }
-  ]
+  ],
+  "relevant_posts": [
+    {
+      "id": "example-002",
+      "title": "How AI Is Reshaping Competitive Strategy",
+      "author": "Jane Smith",
+      "timestamp": "2026-03-01T09:00:00+00:00",
+      "web_url": "",
+      "relevance_reason": "Directly relates to the student's interest in AI and real business applications, with a case study angle that invites debate.",
+      "suggested_comment": "This is a great example of how AI is reshaping business strategy. The parallels to Clayton Christensen's disruption theory are striking — incumbent firms often underestimate AI adoption curves until it's too late to respond. I'd be curious whether the same dynamic applies in regulated industries like healthcare or finance, where adoption barriers are structural rather than cultural."
+    }
+  ],
+  "draft_post": {
+    "title": "Suggested post title that sparks discussion",
+    "body": "Full draft post body of 3-5 sentences. Should connect to MBA themes, reference trending topics from this period's posts, and end with a question or provocation that invites peers to respond."
+  }
 }

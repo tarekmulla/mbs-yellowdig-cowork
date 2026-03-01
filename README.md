@@ -1,6 +1,23 @@
 # Yellowdig Daily Digest Agent
 
-Fetches today's Yellowdig posts, finds what's relevant to your interests, and drops a structured digest with comment suggestions into Notion — every morning, fully automated.
+Fetches today's Yellowdig posts, finds what's relevant to your interests, and drops a structured digest with comment suggestions into Notion, fully automated.
+
+---
+
+## Prerequisites
+
+Before setting up the agent, make sure you have the following:
+
+| Requirement | Notes |
+|-------------|-------|
+| **Claude Pro (or Team/Enterprise) subscription** | Cowork mode and scheduled tasks require a paid Claude plan. A free Claude account is not sufficient. |
+| **Claude desktop app** | Cowork runs inside the Claude desktop app (macOS). Download from [claude.ai/download](https://claude.ai/download). |
+| **"All domains" network access enabled** | Required for Claude to reach the Yellowdig and Notion APIs. See Setup step 1. |
+| **Yellowdig account with API access** | You must be a member of a Yellowdig community and have an API key issued for your account (Settings → API Keys). |
+| **Yellowdig community UUID** | Visible in the community URL. Required in `config.json`. |
+| **Notion account** | A free Notion account is sufficient. You need permission to create an internal integration and connect it to a page. |
+| **Python 3.9+** | The fetch and publish scripts require Python 3. Run `python3 --version` to check. Python is pre-installed on macOS; Windows users may need to install it from [python.org](https://www.python.org/downloads/). |
+| **Python dependencies installed** | Run `make setup` once from the project folder to create a virtual environment and install all required packages from `requirements.txt`. |
 
 ---
 
