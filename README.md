@@ -7,17 +7,21 @@ Fetches today's Yellowdig posts, finds what's relevant to your interests, and dr
 ## How it works
 
 ```
-7:50 AM  Mac Launch Agent  →  make fetch  →  posts.json
-8:00 AM  Claude Cowork     →  analyse  →  publish to Notion
+8:00 AM  Claude Cowork  →  fetch_posts.py  →  analyse  →  publish_digest.py  →  Notion
 ```
 
-The fetch runs on your Mac (not inside Cowork) because Cowork's sandbox restricts outbound network access to an allowlist of approved domains — and Yellowdig's API is not on it. A Mac Launch Agent is macOS's built-in task scheduler: it runs `make fetch` automatically at 7:50 AM every day, even after restarts, and retries if your Mac was asleep at the scheduled time.
+Claude handles the entire pipeline end-to-end: fetching posts from the Yellowdig API, analysing them against your interests, and publishing the digest to Notion. No separate Mac scheduler required.
+
 
 ---
 
 ## Setup (one-time)
 
-### 1. Configure credentials
+### 1. Enable "All domains" in Claude settings
+
+Open the Claude desktop app → **Settings → Capabilities** → enable **All domains**. This allows Claude to reach the Yellowdig API and Notion API directly.
+
+### 2. Configure credentials
 
 ```bash
 cp config.example.json config.json
@@ -30,23 +34,22 @@ Fill in `config.json`:
 | `yellowdig.api_key` | Yellowdig → Settings → API Keys |
 | `yellowdig.network` | URL-name or UUID of your Yellowdig network (organisation) |
 | `yellowdig.community` | UUID of your community (visible in the community URL) |
-| `notion.api_key` | notion.so/my-integrations → New integration → Internal Integration Token |
+| `notion.api_key` | notion.so/my-integrations → New internal integration → Internal Integration Secret |
 | `notion.parent_page_id` | Target Notion page → ··· → Copy link → 32-char hex ID at end of URL |
 
-### 2. Connect Notion to your page (required)
+### 3. Create a Notion internal integration
 
-In Notion: open the parent page → **···** → **Add connections** → select your integration.
+1. Go to [notion.so/Internal integrations](https://www.notion.so/profile/integrations/internal) → **New integration**
+2. Give it a name (e.g. `Yellowdig Digest`), and select your workspace
+3. Click **Save** → copy the **Internal Integration Secret** into `notion.api_key` in `config.json`
 
-### 3. Install the Mac scheduler
+### 4. Connect the integration to your Notion page
 
-```bash
-cd [~/repo/path]
-chmod +x install_scheduler.sh && ./install_scheduler.sh
-```
+Open your target Notion page → click **···** (top right) → **Add connections** → select your integration.
 
-This installs the Launch Agent and does a live fetch test. After this, everything runs automatically.
+> The integration must be connected to the page before Claude can create sub-pages under it.
 
-### 4. Create the Cowork scheduled task
+### 5. Create the Cowork scheduled task
 
 In the Claude desktop app, open **Cowork** → **New scheduled task** and fill in:
 
@@ -59,17 +62,16 @@ In the Claude desktop app, open **Cowork** → **New scheduled task** and fill i
 | **Prompt** | Paste the block below |
 
 ```
-posts.json is pre-fetched by a local Mac script that runs at 7:50 AM, before
-this task fires.
 
-1. Read posts.json from the workspace folder.
-2. Produce two sections and save as analysis.json:
+1. Run fetch_posts.py from the workspace folder to fetch the latest Yellowdig posts.
+2. Produce three sections and save as analysis.json:
    {
      "digest_title": "Yellowdig Digest — DD Mon YYYY",
+     "summary": "2-3 sentence overview of the community activity this period",
      "need_to_know": [
        {
          "id", "title", "author", "timestamp", "web_url",
-         "summary"   ← 2-3 sentence summary of what was said and why it matters
+         "summary"
        }
      ],
      "relevant_posts": [
@@ -77,7 +79,11 @@ this task fires.
          "id", "title", "author", "timestamp", "web_url",
          "relevance_reason", "suggested_comment"
        }
-     ]
+     ],
+     "draft_post": {
+       "title": "suggested post title",
+       "body": "full draft post body (3-5 sentences)"
+     }
    }
 
    need_to_know: posts from instructors or peers that contain important
@@ -88,11 +94,12 @@ this task fires.
    For each, write a thoughtful 2-4 sentence MBA comment that adds value
    to the discussion.
 
-3. Publish the digest to Notion using the Notion MCP tool (do NOT run
-   publish_digest.py — it is blocked by the network proxy). Use the
-   notion.parent_page_id from config.json as the parent page. Structure
-   the Notion page with two clear sections: "Need to Know" followed by
-   "Posts Worth Engaging With".
+   draft_post: a single original post you could publish to the community,
+   inspired by the trending topics in today's posts. Should spark discussion,
+   connect to MBA themes, and reflect the engagement_signal in posts.json.
+
+3. Publish the digest to Notion by running publish_digest.py from the
+   workspace folder.
 ```
 
 ---
@@ -113,8 +120,8 @@ Edit the `interests` section in `config.json`:
 | `401 Unauthorized` from Yellowdig | Check `api_key` in config.json |
 | `400 Bad Request` from Yellowdig | Check `network` and `community` values in config.json |
 | No posts found | Community may be quiet — try increasing `lookback_hours` in config.json |
-| Notion page not created | Make sure the integration is connected to the parent page (step 2) |
-| Fetch didn't run this morning | Check `fetch.log` in this folder for errors |
+| Notion page not created | Make sure the integration is connected to the parent page (steps 3–4) |
+| Network error / connection refused | Confirm "All domains" is enabled in Claude Settings → Capabilities |
 
 ---
 
@@ -122,12 +129,10 @@ Edit the `interests` section in `config.json`:
 
 ```
 mbs-yellowdig-cowork/
-├── fetch_posts.py        ← run by the Mac Launch Agent via make fetch
-├── publish_digest.py     ← unused (Cowork publishes via Notion MCP)
-├── install_scheduler.sh  ← one-time setup: installs the Mac Launch Agent
-├── posts.json            ← written by fetch, read by Cowork (gitignored)
-├── analysis.json         ← written by Cowork (gitignored)
-├── fetch.log             ← Launch Agent output log (gitignored)
+├── fetch_posts.py        ← run by Claude to fetch posts from Yellowdig API
+├── publish_digest.py     ← run by Claude to publish the digest to Notion
+├── posts.json            ← written by fetch_posts.py (gitignored)
+├── analysis.json         ← written by Claude (gitignored)
 ├── config.json           ← your secrets (never commit)
 ├── config.example.json   ← template (safe to share)
 ├── requirements.txt

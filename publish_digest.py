@@ -28,9 +28,10 @@ def load_config() -> dict:
 
 def build_notion_content(analysis: dict, run_date: str) -> str:
     """Builds Notion-flavoured Markdown content for the digest page."""
-    title   = analysis.get("digest_title", "Yellowdig Digest")
-    summary = analysis.get("summary", "")
-    posts   = analysis.get("relevant_posts", [])
+    title        = analysis.get("digest_title", "Yellowdig Digest")
+    summary      = analysis.get("summary", "")
+    need_to_know = analysis.get("need_to_know", [])
+    posts        = analysis.get("relevant_posts", [])
 
     lines = [
         f"> Generated on {run_date}  |  {len(posts)} relevant post(s) found",
@@ -40,9 +41,24 @@ def build_notion_content(analysis: dict, run_date: str) -> str:
         "",
         "---",
         "",
-        "## Posts Worth Engaging With",
-        "",
     ]
+
+    if need_to_know:
+        lines += ["## Need to Know", ""]
+        for item in need_to_know:
+            url        = item.get("web_url", "")
+            title_line = f"**[{item['title']}]({url})**" if url else f"**{item['title']}**"
+            lines += [
+                f"### {title_line}",
+                f"{item.get('author', 'Unknown')}",
+                "",
+                item.get("summary", ""),
+                "",
+                "---",
+                "",
+            ]
+
+    lines += ["## Posts Worth Engaging With", ""]
 
     if not posts:
         lines.append("_No posts matched your interests today. Check back tomorrow!_")
@@ -71,6 +87,17 @@ def build_notion_content(analysis: dict, run_date: str) -> str:
                 "---",
                 "",
             ]
+
+    draft = analysis.get("draft_post", {})
+    if draft:
+        lines += [
+            "## Your Post for Today",
+            "",
+            f"**{draft.get('title', '')}**",
+            "",
+            draft.get("body", ""),
+            "",
+        ]
 
     return "\n".join(lines)
 
